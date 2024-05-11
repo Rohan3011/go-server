@@ -1,6 +1,14 @@
 package api
 
-import "database/sql"
+import (
+	"database/sql"
+	"log"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rohan3011/go-server/services/user"
+)
 
 type APIServer struct {
 	addr string
@@ -15,5 +23,15 @@ func NewAPIServer(addr string, db *sql.DB) *APIServer {
 }
 
 func (s *APIServer) Run() error {
-	return nil
+	router := chi.NewRouter()
+	router.Use(middleware.Logger)
+
+	apiRouter := chi.NewRouter()
+	router.Mount("/api/v1", apiRouter)
+
+	userHandler := user.NewHandler()
+	userHandler.RegisterRoutes(apiRouter)
+
+	log.Printf("Listening on http://localhost%s", s.addr)
+	return http.ListenAndServe(s.addr, router)
 }

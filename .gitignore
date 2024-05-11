@@ -1,0 +1,7 @@
+*.exe
+bin
+tmp
+*.db
+.env
+.env.local
+.env.production
