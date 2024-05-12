@@ -29,7 +29,9 @@ func (s *APIServer) Run() error {
 	apiRouter := chi.NewRouter()
 	router.Mount("/api/v1", apiRouter)
 
-	userHandler := user.NewHandler()
+	// user service
+	userStore := user.NewStore(s.db)
+	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(apiRouter)
 
 	log.Printf("Listening on http://localhost%s", s.addr)
