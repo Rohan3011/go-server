@@ -28,6 +28,18 @@ clean:
 	@echo "Cleaning up..."
 	rm -rf $(OUTDIR)
 
+migration:
+	@echo "Making migration"
+	@migration create -ext sql -dir $(SRCDIR)/migrate/migrations $(filter-out $@, $(MAKECMDGOALS)) 
+
+migrate-up:
+	@echo "migrate up"
+	$(GO) run cmd/migrate/main.go up
+
+migrate-down:
+	@echo "migrate down"
+	$(GO) run cmd/migrate/main.go down
+
 # Help command (to show available commands)
 help:
 	@echo "Available commands:"
