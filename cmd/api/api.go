@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rohan3011/go-server/services/user"
+	"github.com/rohan3011/go-server/services/view"
 )
 
 type APIServer struct {
@@ -28,6 +29,10 @@ func (s *APIServer) Run() error {
 
 	apiRouter := chi.NewRouter()
 	router.Mount("/api/v1", apiRouter)
+
+	// view service
+	viewHandler := view.NewHandler()
+	viewHandler.RegisterRoutes(router)
 
 	// user service
 	userStore := user.NewStore(s.db)
