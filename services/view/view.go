@@ -13,7 +13,13 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
+type GlobalState struct {
+	Count int
+}
+
+var global GlobalState
+
 func (h *Handler) RegisterRoutes(router *chi.Mux) {
-	component := templates.HelloWorld("title")
+	component := templates.IndexPage(global.Count, 0)
 	router.Handle("/", templ.Handler(component))
 }

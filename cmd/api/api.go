@@ -31,6 +31,8 @@ func (s *APIServer) Run() error {
 	router.Mount("/api/v1", apiRouter)
 
 	// view service
+	fs := http.FileServer(http.Dir("static"))
+	router.Handle("/static/*", http.StripPrefix("/static/", fs))
 	viewHandler := view.NewHandler()
 	viewHandler.RegisterRoutes(router)
 

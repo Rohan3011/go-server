@@ -1,0 +1,53 @@
+package templates 
+
+import "strconv"
+
+templ headerComponent(title string) {
+	<head>
+		<title>{ title }</title>
+		<script src="/static/js/htmx.min.js"></script>
+	</head>
+}
+
+templ contentComponent(title string, body templ.Component) {
+	<body>
+		<h1>{ title }</h1>
+		<div class="content">
+			@body
+		</div>
+	</body>
+}
+
+templ contentPage(title string, body templ.Component) {
+	<html>
+		@headerComponent(title)
+		@contentComponent(title, body)
+	</html>
+}
+
+templ IndexPage(global, user int) {
+	<html>
+		@headerComponent("My Blog")
+		<body>
+			<h1>My Blog</h1>
+			@counter(global, user)
+		</body>
+	</html>
+}
+
+templ counts(global, user int) {
+	<div>Global: { strconv.Itoa(global) }</div>
+	<div>User: { strconv.Itoa(user) }</div>
+}
+
+templ form() {
+	<form action="/" method="POST">
+		<div><button type="submit" name="global" value="global">Global</button></div>
+		<div><button type="submit" name="user" value="user">User</button></div>
+	</form>
+}
+
+templ counter(global, user int) {
+	@counts(global, user)
+	@form()
+}
