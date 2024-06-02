@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -18,14 +19,16 @@ func initConfig() Config {
 	godotenv.Load()
 
 	return Config{
-		Port:      getEnv("PORT", "8080"),
-		DBConnStr: getEnv("DBConnStr", `database.db`),
+		Port:      getEnv("PORT"),
+		DBConnStr: getEnv("DBConnStr"),
 	}
 }
 
-func getEnv(key, fallback string) string {
+func getEnv(key string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
-	return fallback
+	log.Fatalf("ENV Variable is missing: %s", key)
+
+	return ""
 }

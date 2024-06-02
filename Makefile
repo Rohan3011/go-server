@@ -30,7 +30,7 @@ clean:
 
 migration:
 	@echo "Making migration"
-	@migration create -ext sql -dir $(SRCDIR)/migrate/migrations $(filter-out $@, $(MAKECMDGOALS)) 
+	@migrate create -ext sql -dir $(SRCDIR)/migrate/migrations $(filter-out $@, $(MAKECMDGOALS)) 
 
 migrate-up:
 	@echo "migrate up"

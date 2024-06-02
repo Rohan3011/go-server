@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	db := db.NewSQLiteDB(config.Env.DBConnStr)
+	db := db.NewPostgresDB(config.Env.DBConnStr)
 
 	server := api.NewAPIServer(fmt.Sprintf(":%s", config.Env.Port), db)
 

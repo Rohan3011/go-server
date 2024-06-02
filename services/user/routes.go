@@ -26,6 +26,38 @@ func (h *Handler) RegisterRoutes(router *chi.Mux) {
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
+	//get JSON payload
+	var payload types.LoginUserPayload
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// validate the payload
+	if err := utils.Validate.Struct(payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload %v", errors))
+		return
+	}
+
+	// check if the user exists
+	user, err := h.store.GetUserByEmail(payload.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid email or password"))
+		return
+	}
+
+	err = auth.ValidatePassword(user.Password, payload.Password)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid email or password"))
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]any{
+		"success": "Login successful",
+		"user":    user,
+	})
+
 }
 
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {

@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 )
 
-func NewSQLiteDB(connStr string) *sql.DB {
-	db, err := sql.Open("sqlite3", connStr)
+func NewPostgresDB(connStr string) *sql.DB {
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -19,7 +19,7 @@ func NewSQLiteDB(connStr string) *sql.DB {
 		log.Fatal(err)
 	}
 
-	log.Println("Successfully connected to sqlite database!")
+	log.Println("Successfully connected to postgres database!")
 
 	return db
 }
