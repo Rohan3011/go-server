@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/rohan3011/go-server/types"
 )
 
 var Validate = validator.New(validator.WithRequiredStructEnabled())
@@ -17,14 +18,16 @@ func ParseJSON(r *http.Request, payload any) error {
 	return json.NewDecoder(r.Body).Decode(payload)
 }
 
-func WriteJSON(w http.ResponseWriter, status int, v any) error {
+func WriteJSON(w http.ResponseWriter, status int, v *types.Response) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
 }
 
 func WriteError(w http.ResponseWriter, status int, err error) {
-	WriteJSON(w, status, map[string]string{
-		"error": err.Error(),
+	WriteJSON(w, status, &types.Response{
+		Status: "error",
+		Data:   nil,
+		Error:  err.Error(),
 	})
 }

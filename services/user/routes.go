@@ -53,9 +53,9 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, map[string]any{
-		"success": "Login successful",
-		"user":    user,
+	utils.WriteJSON(w, http.StatusCreated, &types.Response{
+		Status: "success",
+		Data:   user,
 	})
 
 }
