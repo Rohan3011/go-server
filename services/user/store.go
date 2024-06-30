@@ -22,8 +22,8 @@ func (s *Store) GetUserByEmail(email string) (*types.User, error) {
 		SELECT * FROM users WHERE email = $1;
 	`
 
-	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelfunc()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	row := s.db.QueryRowContext(ctx, query, email)
 
@@ -51,8 +51,8 @@ func (s *Store) GetUserByID(id int) (*types.User, error) {
 	SELECT * FROM users WHERE id = ?;
 `
 
-	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelfunc()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	row := s.db.QueryRowContext(ctx, query, id)
 
@@ -81,8 +81,8 @@ func (s *Store) CreateUser(user types.User) error {
 	INSERT INTO users (firstname, lastname, email, password)
 	VALUES ($1, $2, $3, $4)
 `
-	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancelfunc()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	_, err := s.db.ExecContext(ctx, query, user.FirstName, user.LastName, user.Email, user.Password)
 	if err != nil {
