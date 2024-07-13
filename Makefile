@@ -40,6 +40,14 @@ migrate-down:
 	@echo "migrate down"
 	$(GO) run cmd/migrate/main.go down
 
+.PHONY: codegen crud
+
+codegen: crud
+
+crud:
+	@echo "codegen inprocess..."
+	$(GO) run codegen/generate_crud.go $(ARGS)
+
 # Help command (to show available commands)
 help:
 	@echo "Available commands:"

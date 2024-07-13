@@ -1,0 +1,36 @@
+package {{.PackageName}}
+
+import (
+	"database/sql"
+	"fmt"
+)
+
+type {{.StructName}} struct {
+	db *sql.DB
+}
+
+func New{{.StructName}}(db *sql.DB) *{{.StructName}} {
+	return &{{.StructName}}{db: db}
+}
+
+func (s *{{.StructName}}) Create(item {{.EntityName}}) error {
+	// Add your create logic here
+	return nil
+}
+
+func (s *{{.StructName}}) Read(id int) (*{{.EntityName}}, error) {
+	// Add your read logic here
+	return nil, nil
+}
+
+func (s *{{.StructName}}) Update(item {{.EntityName}}) error {
+	// Add your update logic here
+	return nil
+}
+
+func (s *{{.StructName}}) Delete(id int) error {
+	// Add your delete logic here
+	return nil
+}
+
+// Add more methods as needed
