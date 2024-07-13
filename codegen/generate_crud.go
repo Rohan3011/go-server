@@ -20,7 +20,7 @@ func generateCRUD(structName, entityName, packageName string) {
 		EntityName:  entityName,
 	}
 
-	tmpl, err := template.ParseFiles("crud_template.go.tmpl")
+	tmpl, err := template.ParseFiles("codegen/crud_template.go.tmpl")
 	if err != nil {
 		fmt.Printf("Error parsing template: %v\n", err)
 		return
