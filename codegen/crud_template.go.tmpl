@@ -9,27 +9,54 @@ type {{.StructName}} struct {
 	db *sql.DB
 }
 
+type {{.EntityName}} struct {
+{{- range .Fields }}
+	{{ .Name }} {{ .Type }}
+{{- end }}
+}
+
 func New{{.StructName}}(db *sql.DB) *{{.StructName}} {
 	return &{{.StructName}}{db: db}
 }
 
 func (s *{{.StructName}}) Create(item {{.EntityName}}) error {
-	// Add your create logic here
+	query := "INSERT INTO {{.TableName}} ({{range $index, $field := .Fields}}{{if $index}}, {{end}}{{$field.Name}}{{end}}) VALUES ({{range $index, $field := .Fields}}{{if $index}}, {{end}}?{{end}})"
+	_, err := s.db.Exec(query, {{range $index, $field := .Fields}}{{if $index}}, {{end}}item.{{$field.Name}}{{end}})
+	if err != nil {
+		return fmt.Errorf("could not create item: %v", err)
+	}
 	return nil
 }
 
 func (s *{{.StructName}}) Read(id int) (*{{.EntityName}}, error) {
-	// Add your read logic here
-	return nil, nil
+	query := "SELECT {{range $index, $field := .Fields}}{{if $index}}, {{end}}{{$field.Name}}{{end}} FROM {{.TableName}} WHERE id = ?"
+	row := s.db.QueryRow(query, id)
+	item := &{{.EntityName}}{}
+	err := row.Scan({{range $index, $field := .Fields}}{{if $index}}, {{end}}&item.{{$field.Name}}{{end}})
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("could not read item: %v", err)
+	}
+	return item, nil
 }
 
 func (s *{{.StructName}}) Update(item {{.EntityName}}) error {
-	// Add your update logic here
+	query := "UPDATE {{.TableName}} SET {{range $index, $field := .Fields}}{{if $index}}, {{end}}{{$field.Name}} = ?{{end}} WHERE id = ?"
+	_, err := s.db.Exec(query, {{range $index, $field := .Fields}}{{if $index}}, {{end}}item.{{$field.Name}}{{end}}, item.ID)
+	if err != nil {
+		return fmt.Errorf("could not update item: %v", err)
+	}
 	return nil
 }
 
 func (s *{{.StructName}}) Delete(id int) error {
-	// Add your delete logic here
+	query := "DELETE FROM {{.TableName}} WHERE id = ?"
+	_, err := s.db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("could not delete item: %v", err)
+	}
 	return nil
 }
 

@@ -2,8 +2,10 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"text/template"
 )
 
@@ -11,15 +13,16 @@ type TemplateData struct {
 	PackageName string
 	StructName  string
 	EntityName  string
+	TableName   string
+	Fields      []Field
 }
 
-func generateCRUD(structName, entityName, packageName string) {
-	data := TemplateData{
-		PackageName: packageName,
-		StructName:  structName,
-		EntityName:  entityName,
-	}
+type Field struct {
+	Name string
+	Type string
+}
 
+func generateCRUD(data TemplateData) {
 	tmpl, err := template.ParseFiles("codegen/crud_template.go.tmpl")
 	if err != nil {
 		fmt.Printf("Error parsing template: %v\n", err)
@@ -34,7 +37,7 @@ func generateCRUD(structName, entityName, packageName string) {
 	}
 
 	output := buf.String()
-	fileName := fmt.Sprintf("%s_crud.go", structName)
+	fileName := fmt.Sprintf("%s_crud.go", data.StructName)
 	err = os.WriteFile(fileName, []byte(output), 0644)
 	if err != nil {
 		fmt.Printf("Error writing file: %v\n", err)
@@ -45,14 +48,34 @@ func generateCRUD(structName, entityName, packageName string) {
 }
 
 func main() {
-	if len(os.Args) < 4 {
-		fmt.Println("Usage: go run generate_code.go <struct_name> <entity_name> <package_name>")
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: go run generate_code.go crud <schema_package> <schema_name>")
 		return
 	}
 
-	structName := os.Args[1]
-	entityName := os.Args[2]
-	packageName := os.Args[3]
+	command := os.Args[1]
+	schemaPackage := os.Args[2]
+	schemaName := os.Args[3]
 
-	generateCRUD(structName, entityName, packageName)
+	if command != "crud" {
+		fmt.Printf("Unknown command: %s\n", command)
+		return
+	}
+
+	schemaFile := fmt.Sprintf("%s/schema.go", schemaPackage)
+	cmd := exec.Command("go", "run", schemaFile, schemaName)
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("Error running schema file: %v\n", err)
+		return
+	}
+
+	var templateData TemplateData
+	err = json.Unmarshal(output, &templateData)
+	if err != nil {
+		fmt.Printf("Error parsing schema output: %v\n", err)
+		return
+	}
+
+	generateCRUD(templateData)
 }
