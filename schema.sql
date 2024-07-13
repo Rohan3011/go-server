@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS todos (
+    id SERIAL PRIMARY KEY,
+    done BOOLEAN DEFAULT false,
+    content TEXT,
+    createdAt TIMESTAMP NOT NULL DEFAULT NOW()
+)   
