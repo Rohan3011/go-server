@@ -18,7 +18,7 @@ build:
 	@echo "Building $(TARGET)..."
 	$(GO) build -o $(OUTDIR)/$(TARGET) $(SOURCES)
 
-# Run command
+# Run command (depends on build)
 run: build
 	@echo "Running $(TARGET)..."
 	$(OUTDIR)/$(TARGET)
@@ -28,29 +28,37 @@ clean:
 	@echo "Cleaning up..."
 	rm -rf $(OUTDIR)
 
+# Migration command to create a new migration
 migration:
-	@echo "Making migration"
-	@migrate create -ext sql -dir $(SRCDIR)/migrate/migrations $(filter-out $@, $(MAKECMDGOALS)) 
+	@echo "Creating migration..."
+	@migrate create -ext sql -dir $(SRCDIR)/migrate/migrations $(filter-out $@, $(MAKECMDGOALS))
 
+# Migrate up command
 migrate-up:
-	@echo "migrate up"
-	$(GO) run cmd/migrate/main.go up
+	@echo "Applying migrations up..."
+	$(GO) run $(SRCDIR)/migrate/main.go up
 
+# Migrate down command
 migrate-down:
-	@echo "migrate down"
-	$(GO) run cmd/migrate/main.go down
+	@echo "Applying migrations down..."
+	$(GO) run $(SRCDIR)/migrate/main.go down
 
-.PHONY: codegen crud
-
+# Code generation command
 codegen: crud
 
+SCHEMA_PACKAGE := schemas
+
 crud:
-	@echo "codegen inprocess..."
-	$(GO) run codegen/generate_crud.go $(ARGS)
+	@echo "Running code generation..."
+	$(GO) run codegen/generate_crud.go crud $(SCHEMA_PACKAGE) $(SCHEMA_NAME)
 
 # Help command (to show available commands)
 help:
 	@echo "Available commands:"
-	@echo "  make build     - Build the project"
-	@echo "  make run       - Build and run the project"
-	@echo "  make clean     - Clean up built binaries"
+	@echo "  make build       - Build the project"
+	@echo "  make run         - Build and run the project"
+	@echo "  make clean       - Clean up built binaries"
+	@echo "  make migration   - Create a new migration (Usage: make migration name=<migration_name>)"
+	@echo "  make migrate-up  - Apply migrations up"
+	@echo "  make migrate-down- Apply migrations down"
+	@echo "  make codegen
