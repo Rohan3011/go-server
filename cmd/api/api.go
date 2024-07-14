@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rohan3011/go-server/services/todo"
 	"github.com/rohan3011/go-server/services/user"
 	"github.com/rohan3011/go-server/services/view"
 )
@@ -40,6 +41,11 @@ func (s *APIServer) Run() error {
 	userStore := user.NewStore(s.db)
 	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(apiRouter)
+
+	// todo service
+	todoStore := todo.NewTodoStore(s.db)
+	todoHandler := todo.NewHandler(*todoStore)
+	todoHandler.RegisterRoutes(apiRouter)
 
 	log.Printf("Listening on http://localhost%s", s.addr)
 	return http.ListenAndServe(s.addr, router)

@@ -1,8 +1,10 @@
 package {{.PackageName}}
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type {{.StructName}} struct {
@@ -11,26 +13,86 @@ type {{.StructName}} struct {
 
 type {{.EntityName}} struct {
 {{- range .Fields }}
-	{{ .Name }} {{ .Type }}
+	{{ .Name }} {{ .Type }} `json:"{{ camelCase .Name }}"`
 {{- end }}
 }
+
+type {{.EntityName}}Insert struct {
+{{- range .Fields }}
+	{{ .Name }} {{ .Type }} `json:"{{ camelCase .Name }}"`
+{{- end }}
+}
+
+type {{.EntityName}}Update struct {
+{{- range .Fields }}
+	{{ .Name }} {{"*"}}{{ .Type }} `json:"{{ camelCase .Name}},omitempty"`
+{{- end }}
+}
+
+
 
 func New{{.StructName}}(db *sql.DB) *{{.StructName}} {
 	return &{{.StructName}}{db: db}
 }
 
-func (s *{{.StructName}}) Create(item {{.EntityName}}) error {
-	query := "INSERT INTO {{.TableName}} ({{range $index, $field := .Fields}}{{if $index}}, {{end}}{{$field.Name}}{{end}}) VALUES ({{range $index, $field := .Fields}}{{if $index}}, {{end}}?{{end}})"
-	_, err := s.db.Exec(query, {{range $index, $field := .Fields}}{{if $index}}, {{end}}item.{{$field.Name}}{{end}})
+func (s *{{.StructName}}) Create(item {{.EntityName}}Insert) error {
+	query := "INSERT INTO {{.TableName}} ({{range $index, $field := .Fields}}{{if $index}}, {{end}}{{$field.Name}}{{end}}) VALUES ({{range $index, $field := .Fields}}{{if $index}}, {{end}}${{inc $index}}{{end}})"
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, query, {{range $index, $field := .Fields}}{{if $index}}, {{end}}item.{{$field.Name}}{{end}})
 	if err != nil {
 		return fmt.Errorf("could not create item: %v", err)
 	}
 	return nil
 }
 
+func (s *{{.StructName}}) List(limit, offset int, filters *map[string]string) ([]{{.EntityName}}, error) {
+	query := `SELECT * FROM {{.TableName}}`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Append filter condition
+	if filters != nil {
+		for k, v := range *filters {
+			query += fmt.Sprintf(" WHERE %s LIKE '%%%s%%'", k, v)
+		}
+	}
+
+	// Add pagination
+	query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying database: %v", err)
+	}
+	defer rows.Close()
+
+	var items []{{.EntityName}}
+	for rows.Next() {
+		item := {{.EntityName}}{}
+		err := rows.Scan({{range $index, $field := .Fields}}{{if $index}}, {{end}}&item.{{$field.Name}}{{end}})
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
+	}
+
+	return items, nil
+}
+
 func (s *{{.StructName}}) Read(id int) (*{{.EntityName}}, error) {
-	query := "SELECT {{range $index, $field := .Fields}}{{if $index}}, {{end}}{{$field.Name}}{{end}} FROM {{.TableName}} WHERE id = ?"
-	row := s.db.QueryRow(query, id)
+	query := `SELECT * FROM {{.TableName}} WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	row := s.db.QueryRowContext(ctx, query, id)
 	item := &{{.EntityName}}{}
 	err := row.Scan({{range $index, $field := .Fields}}{{if $index}}, {{end}}&item.{{$field.Name}}{{end}})
 	if err != nil {
@@ -42,9 +104,12 @@ func (s *{{.StructName}}) Read(id int) (*{{.EntityName}}, error) {
 	return item, nil
 }
 
-func (s *{{.StructName}}) Update(item {{.EntityName}}) error {
-	query := "UPDATE {{.TableName}} SET {{range $index, $field := .Fields}}{{if $index}}, {{end}}{{$field.Name}} = ?{{end}} WHERE id = ?"
-	_, err := s.db.Exec(query, {{range $index, $field := .Fields}}{{if $index}}, {{end}}item.{{$field.Name}}{{end}}, item.ID)
+func (s *{{.StructName}}) Update(id int, item {{.EntityName}}Update) error {
+	query := `UPDATE {{.TableName}} SET {{range $index, $field := .Fields}}{{if $index}}, {{end}}{{$field.Name}} = ${{inc $index}} {{end}} WHERE id = ${{ inc (len .Fields)}}`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := s.db.ExecContext(ctx, query, {{range $index, $field := .Fields}}{{if $index}}, {{end}}item.{{$field.Name}}{{end}}, id)
 	if err != nil {
 		return fmt.Errorf("could not update item: %v", err)
 	}
@@ -52,12 +117,16 @@ func (s *{{.StructName}}) Update(item {{.EntityName}}) error {
 }
 
 func (s *{{.StructName}}) Delete(id int) error {
-	query := "DELETE FROM {{.TableName}} WHERE id = ?"
-	_, err := s.db.Exec(query, id)
+	query := `DELETE FROM {{.TableName}} WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("could not delete item: %v", err)
 	}
 	return nil
 }
 
-// Add more methods as needed
+

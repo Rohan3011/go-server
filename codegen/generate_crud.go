@@ -6,7 +6,12 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
+	"strings"
 	"text/template"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type TemplateData struct {
@@ -23,7 +28,19 @@ type Field struct {
 }
 
 func generateCRUD(data TemplateData) {
-	tmpl, err := template.ParseFiles("codegen/crud_template.go.tmpl")
+
+	// Read the template file
+	tmplContent, err := os.ReadFile("codegen/crud_template.go.tmpl")
+	if err != nil {
+		panic(err)
+	}
+
+	// Parse template file
+	tmpl, err := template.New("crudTemplate").Funcs(template.FuncMap{
+		"camelCase": camelCase,
+		"inc":       increment,
+	}).Parse(string(tmplContent))
+
 	if err != nil {
 		fmt.Printf("Error parsing template: %v\n", err)
 		return
@@ -78,4 +95,25 @@ func main() {
 	}
 
 	generateCRUD(templateData)
+}
+
+// helpers
+func camelCase(s string) string {
+	// Remove non-alphanumeric characters
+	s = regexp.MustCompile("[^a-zA-Z0-9_ ]+").ReplaceAllString(s, "")
+	// Replace underscores with spaces
+	s = strings.ReplaceAll(s, "_", " ")
+	// Title case
+	s = cases.Title(language.AmericanEnglish, cases.NoLower).String(s)
+	// Remove spaces
+	s = strings.ReplaceAll(s, " ", "")
+	// Lowercase the first letter
+	if len(s) > 0 {
+		s = strings.ToLower(s[:1]) + s[1:]
+	}
+	return s
+}
+
+func increment(n int) int {
+	return n + 1
 }

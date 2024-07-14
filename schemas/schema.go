@@ -41,7 +41,7 @@ var productSchema = Schema{
 	EntityName:  "Product",
 	TableName:   "products",
 	Fields: []Field{
-		{Name: "ID", Type: "int"},
+		{Name: "Id", Type: "int"},
 		{Name: "Name", Type: "string"},
 		{Name: "Price", Type: "float64"},
 		{Name: "Stock", Type: "int"},
