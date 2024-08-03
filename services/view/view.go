@@ -20,6 +20,6 @@ type GlobalState struct {
 var global GlobalState
 
 func (h *Handler) RegisterRoutes(router *chi.Mux) {
-	component := templates.IndexPage(global.Count, 0)
-	router.Handle("/", templ.Handler(component))
+	indexPage := templates.IndexPage(global.Count, 0)
+	router.Handle("/", templ.Handler(indexPage))
 }

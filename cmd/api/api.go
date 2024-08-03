@@ -23,6 +23,13 @@ func NewAPIServer(addr string, db *sql.DB) *APIServer {
 	}
 }
 
+// Run starts the API server and listens for incoming requests.
+//
+// It initializes the router, sets up middleware, mounts the API routes,
+// sets up the view service, sets up the user service, and starts the server
+// to listen on the specified address.
+//
+// Returns an error if there was a problem starting the server.
 func (s *APIServer) Run() error {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)

@@ -31,6 +31,7 @@ templ IndexPage(global, user int) {
 		<body>
 			<h1>My Blog</h1>
 			@counter(global, user)
+			<script src="https://unpkg.com/htmx.org@2.0.1"></script>
 		</body>
 	</html>
 }
@@ -41,7 +42,7 @@ templ counts(global, user int) {
 }
 
 templ form() {
-	<form action="/" method="POST">
+	<form hx-post="/actions/increment" hx-trigger>
 		<div><button type="submit" name="global" value="global">Global</button></div>
 		<div><button type="submit" name="user" value="user">User</button></div>
 	</form>
