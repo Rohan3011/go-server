@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/rohan3011/go-server/config"
 	"github.com/rohan3011/go-server/types"
 )
 
-var jwtKey = []byte("your_secret_key")
+var jwtKey = []byte(config.Env.SecretKey)
 
 type Claims struct {
 	types.User

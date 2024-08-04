@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Port      string
 	DBConnStr string
+	SecretKey string
 }
 
 var Env = initConfig()
@@ -21,6 +22,7 @@ func initConfig() Config {
 	return Config{
 		Port:      getEnv("PORT"),
 		DBConnStr: getEnv("DBConnStr"),
+		SecretKey: getEnv("SecretKey"),
 	}
 }
 
