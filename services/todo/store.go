@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/rohan3011/go-server/types"
 )
 
 type TodoStore struct {
@@ -12,16 +14,19 @@ type TodoStore struct {
 }
 
 type Todo struct {
-	ID        int       `json:"id"`
-	Title     string    `json:"title"`
-	Completed bool      `json:"completed"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID        int         `json:"id"`
+	Title     string      `json:"title"`
+	Completed bool        `json:"completed"`
+	CreatedAt time.Time   `json:"createdAt"`
+	UserID    int         `json:"user_id"`        // Foreign key to the User
+	User      *types.User `json:"user,omitempty"` // Associated User, optional (use *User to handle cases where user might be null)
 }
 
 // TodoInsert represents the data required to insert a new Todo.
 type TodoInsert struct {
 	Title     string `json:"title"`
 	Completed bool   `json:"completed"`
+	UserId    int    `json:"user_id"`
 }
 
 // TodoUpdate represents the data fields that can be updated for Todo.
@@ -35,12 +40,12 @@ func NewTodoStore(db *sql.DB) *TodoStore {
 }
 
 func (s *TodoStore) Create(item TodoInsert) error {
-	query := `INSERT INTO todos (title, completed) VALUES ($1, $2);`
+	query := `INSERT INTO todos (title, completed, user_id) VALUES ($1, $2, $3);`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := s.db.ExecContext(ctx, query, item.Title, item.Completed)
+	_, err := s.db.ExecContext(ctx, query, item.Title, item.Completed, item.UserId)
 	if err != nil {
 		return fmt.Errorf("could not create item: %v", err)
 	}
@@ -48,7 +53,24 @@ func (s *TodoStore) Create(item TodoInsert) error {
 }
 
 func (s *TodoStore) List(limit, offset int, filters *map[string]string) ([]Todo, error) {
-	query := "SELECT * FROM todos"
+	query := `
+	SELECT 
+		todos.id AS todo_id,
+		todos.title,
+		todos.completed,
+		todos.created_at,
+		users.id AS user_id,
+		users.firstname,
+		users.lastname,
+		users.email
+	FROM 
+		todos
+	JOIN 
+		users ON todos.user_id = users.id
+	WHERE
+		user_id = $1
+	LIMIT $2 OFFSET $3;
+	`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -60,10 +82,7 @@ func (s *TodoStore) List(limit, offset int, filters *map[string]string) ([]Todo,
 		}
 	}
 
-	// Add pagination
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
-
-	rows, err := s.db.QueryContext(ctx, query)
+	rows, err := s.db.QueryContext(ctx, query, 1, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database: %v", err)
 	}
@@ -72,10 +91,19 @@ func (s *TodoStore) List(limit, offset int, filters *map[string]string) ([]Todo,
 	var items []Todo
 	for rows.Next() {
 		item := Todo{}
-		err := rows.Scan(&item.ID, &item.Title, &item.Completed, &item.CreatedAt)
+		var user types.User
+		err := rows.Scan(&item.ID, &item.Title, &item.Completed, &item.CreatedAt, &user.ID,
+			&user.FirstName, &user.LastName, &user.Email,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
+
+		// Check if the user is NULL (when using LEFT JOIN)
+		if user.ID != 0 {
+			item.User = &user
+		}
+
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
