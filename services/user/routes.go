@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -22,6 +23,13 @@ func NewHandler(store types.UserStore) *Handler {
 func (h *Handler) RegisterRoutes(router *chi.Mux) {
 	router.Post("/login", h.handleLogin)
 	router.Post("/register", h.handleRegister)
+	router.Post("/logout", h.handleLogout)
+
+	router.Group(func(r chi.Router) {
+		r.Use(auth.AuthMiddleware)
+		r.Get("/me", h.handleUserDetails)
+	})
+
 }
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +60,22 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid email or password"))
 		return
 	}
+
+	// Generate a session token
+	token, err := auth.GenerateSessionToken(user)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// Set the cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		// Secure:   true, // Set this to true in production
+	})
 
 	utils.WriteJSON(w, http.StatusCreated, &types.Response{
 		Status: "success",
@@ -103,4 +127,33 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusCreated, nil)
 
+}
+
+func (h *Handler) handleLogout(w http.ResponseWriter, r *http.Request) {
+	// Clear the session cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Expires:  time.Unix(0, 0), // Set the expiration time to the past
+	})
+
+	utils.WriteJSON(w, http.StatusOK, &types.Response{
+		Status: "success",
+		Data:   "logged out",
+	})
+}
+
+func (h *Handler) handleUserDetails(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(auth.UserKey).(*auth.Claims)
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("unauthorized"))
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, &types.Response{
+		Status: "success",
+		Data:   user,
+	})
 }

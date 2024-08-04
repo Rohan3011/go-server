@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/rohan3011/go-server/services/auth"
 	"github.com/rohan3011/go-server/types"
 	"github.com/rohan3011/go-server/utils"
 )
@@ -21,6 +22,7 @@ func NewHandler(store TodoStore) *Handler {
 func (h *Handler) RegisterRoutes(router *chi.Mux) {
 
 	router.Route("/todos", func(r chi.Router) {
+		r.Use(auth.AuthMiddleware)
 		r.Get("/", h.ListTodos)
 		r.Get("/{id}", h.GetTodo)
 		r.Post("/", h.CreateTodo)
@@ -30,8 +32,13 @@ func (h *Handler) RegisterRoutes(router *chi.Mux) {
 }
 
 func (h *Handler) ListTodos(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(auth.UserKey).(*auth.Claims)
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("unauthorized"))
+		return
+	}
 
-	todos, err := h.store.List(10, 0, nil)
+	todos, err := h.store.List(user.ID, 10, 0, nil)
 
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)

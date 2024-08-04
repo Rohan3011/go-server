@@ -52,7 +52,7 @@ func (s *TodoStore) Create(item TodoInsert) error {
 	return nil
 }
 
-func (s *TodoStore) List(limit, offset int, filters *map[string]string) ([]Todo, error) {
+func (s *TodoStore) List(userId, limit, offset int, filters *map[string]string) ([]Todo, error) {
 	query := `
 	SELECT 
 		todos.id AS todo_id,
@@ -82,7 +82,7 @@ func (s *TodoStore) List(limit, offset int, filters *map[string]string) ([]Todo,
 		}
 	}
 
-	rows, err := s.db.QueryContext(ctx, query, 1, limit, offset)
+	rows, err := s.db.QueryContext(ctx, query, userId, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("error querying database: %v", err)
 	}
