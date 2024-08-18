@@ -7,7 +7,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/rohan3011/go-server/config"
 	"github.com/rohan3011/go-server/services/todo"
+	"github.com/rohan3011/go-server/services/upload"
 	"github.com/rohan3011/go-server/services/user"
 	"github.com/rohan3011/go-server/services/view"
 )
@@ -46,6 +48,11 @@ func (s *APIServer) Run() error {
 	todoStore := todo.NewTodoStore(s.db)
 	todoHandler := todo.NewHandler(*todoStore)
 	todoHandler.RegisterRoutes(apiRouter)
+
+	// upload service
+	uploadStorage := upload.NewLocalStorage(config.Env.UploadDir)
+	uploadHandler := upload.NewHandler(uploadStorage)
+	uploadHandler.RegisterRoutes(apiRouter)
 
 	log.Printf("Listening on http://localhost%s", s.addr)
 	return http.ListenAndServe(s.addr, router)

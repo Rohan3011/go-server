@@ -11,6 +11,7 @@ type Config struct {
 	Port      string
 	DBConnStr string
 	SecretKey string
+	UploadDir string
 }
 
 var Env = initConfig()
@@ -20,9 +21,10 @@ func initConfig() Config {
 	godotenv.Load()
 
 	return Config{
-		Port:      getEnv("PORT"),
+		Port:      getEnv("Port"),
 		DBConnStr: getEnv("DBConnStr"),
 		SecretKey: getEnv("SecretKey"),
+		UploadDir: getEnv("UploadDir"),
 	}
 }
 
