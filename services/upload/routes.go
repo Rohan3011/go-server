@@ -1,6 +1,7 @@
 package upload
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -20,6 +21,7 @@ func NewHandler(storage Storage) *Handler {
 func (h *Handler) RegisterRoutes(router *chi.Mux) {
 	router.Route("/uploads", func(r chi.Router) {
 		r.Use(auth.AuthMiddleware)
+		r.Use(FileUploadMiddleware(h.storage)) // Use the file upload middleware
 		r.Post("/", h.UploadFile)
 		r.Get("/", h.ListFiles)
 		r.Get("/{filename}", h.GetFile)
@@ -28,23 +30,16 @@ func (h *Handler) RegisterRoutes(router *chi.Mux) {
 }
 
 func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
-		return
-	}
-	defer file.Close()
-
-	filename := utils.GenerateFilename(header.Filename)
-	uploadedFilename, err := h.storage.UploadFile(file, filename)
-	if err != nil {
-		utils.WriteError(w, http.StatusInternalServerError, err)
+	// Retrieve the file URL or path from the context
+	fileURL, ok := GetFileURLFromContext(r.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("file upload failed"))
 		return
 	}
 
 	utils.WriteJSON(w, http.StatusCreated, &types.Response{
 		Status: "success",
-		Data:   map[string]string{"filename": uploadedFilename},
+		Data:   map[string]string{"fileURL": fileURL},
 	})
 }
 
