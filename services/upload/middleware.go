@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/rohan3011/go-server/services/upload/storage"
 	"github.com/rohan3011/go-server/utils"
 )
 
@@ -13,7 +14,7 @@ type FileURLKey string
 const fileURLKey = FileURLKey("fileURL")
 
 // FileUploadMiddleware handles file upload and stores the file URL or path in the context
-func FileUploadMiddleware(storage Storage) func(next http.Handler) http.Handler {
+func FileUploadMiddleware(storage storage.Storage) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodPost && strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data") {

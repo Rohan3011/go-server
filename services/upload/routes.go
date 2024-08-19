@@ -6,15 +6,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rohan3011/go-server/services/auth"
+	"github.com/rohan3011/go-server/services/upload/storage"
 	"github.com/rohan3011/go-server/types"
 	"github.com/rohan3011/go-server/utils"
 )
 
 type Handler struct {
-	storage Storage
+	storage storage.Storage
 }
 
-func NewHandler(storage Storage) *Handler {
+func NewHandler(storage storage.Storage) *Handler {
 	return &Handler{storage: storage}
 }
 

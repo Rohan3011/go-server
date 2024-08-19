@@ -10,6 +10,7 @@ import (
 	"github.com/rohan3011/go-server/config"
 	"github.com/rohan3011/go-server/services/todo"
 	"github.com/rohan3011/go-server/services/upload"
+	"github.com/rohan3011/go-server/services/upload/storage"
 	"github.com/rohan3011/go-server/services/user"
 	"github.com/rohan3011/go-server/services/view"
 )
@@ -50,7 +51,7 @@ func (s *APIServer) Run() error {
 	todoHandler.RegisterRoutes(apiRouter)
 
 	// upload service
-	uploadStorage := upload.NewLocalStorage(config.Env.UploadDir)
+	uploadStorage := storage.NewLocalStorage(config.Env.UploadDir)
 	uploadHandler := upload.NewHandler(uploadStorage)
 	uploadHandler.RegisterRoutes(apiRouter)
 
