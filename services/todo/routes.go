@@ -32,7 +32,7 @@ func (h *Handler) RegisterRoutes(router *chi.Mux) {
 }
 
 func (h *Handler) ListTodos(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value(auth.UserKey).(*auth.Claims)
+	user, ok := auth.GetUserFromContext(r.Context())
 	if !ok {
 		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("unauthorized"))
 		return

@@ -33,3 +33,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+func GetUserFromContext(ctx context.Context) (*Claims, bool) {
+	user, ok := ctx.Value(UserKey).(*Claims)
+
+	return user, ok
+}
