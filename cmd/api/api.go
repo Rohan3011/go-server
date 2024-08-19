@@ -51,8 +51,9 @@ func (s *APIServer) Run() error {
 	todoHandler.RegisterRoutes(apiRouter)
 
 	// upload service
-	uploadStorage := storage.NewLocalStorage(config.Env.UploadDir)
-	uploadHandler := upload.NewHandler(uploadStorage)
+	fileStorage := storage.NewLocalStorage(config.Env.UploadDir)
+	uploadStore := upload.NewUploadStore(s.db)
+	uploadHandler := upload.NewHandler(*uploadStore, fileStorage)
 	uploadHandler.RegisterRoutes(apiRouter)
 
 	log.Printf("Listening on http://localhost%s", s.addr)

@@ -2,6 +2,7 @@ package upload
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -9,9 +10,9 @@ import (
 	"github.com/rohan3011/go-server/utils"
 )
 
-type FileURLKey string
+type FileDataKey string
 
-const fileURLKey = FileURLKey("fileURL")
+const fileDataKey = FileDataKey("fileData")
 
 // FileUploadMiddleware handles file upload and stores the file URL or path in the context
 func FileUploadMiddleware(storage storage.Storage) func(next http.Handler) http.Handler {
@@ -20,7 +21,7 @@ func FileUploadMiddleware(storage storage.Storage) func(next http.Handler) http.
 			if r.Method == http.MethodPost && strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data") {
 				file, header, err := r.FormFile("file")
 				if err != nil {
-					http.Error(w, "Error retrieving file", http.StatusBadRequest)
+					utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("error retrieving file"))
 					return
 				}
 				defer file.Close()
@@ -31,12 +32,17 @@ func FileUploadMiddleware(storage storage.Storage) func(next http.Handler) http.
 				// Upload file and get its URL or file path
 				filePath, err := storage.UploadFile(file, filename)
 				if err != nil {
-					http.Error(w, "Error uploading file", http.StatusInternalServerError)
+					utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("error uploading file: %s", err))
+
 					return
 				}
 
 				// Attach file URL or path to request context
-				ctx := context.WithValue(r.Context(), fileURLKey, filePath)
+				ctx := context.WithValue(r.Context(), fileDataKey, &FileInsert{
+					Filename: filename,
+					FileURL:  filePath,
+					FileSize: header.Size,
+				})
 				next.ServeHTTP(w, r.WithContext(ctx))
 			} else {
 				next.ServeHTTP(w, r)
@@ -45,8 +51,8 @@ func FileUploadMiddleware(storage storage.Storage) func(next http.Handler) http.
 	}
 }
 
-// GetFileURLFromContext retrieves the file URL or path from the request context
-func GetFileURLFromContext(ctx context.Context) (string, bool) {
-	url, ok := ctx.Value(fileURLKey).(string)
-	return url, ok
+// retrieves the file data from the request context
+func GetFileDataFromContext(ctx context.Context) (*FileInsert, bool) {
+	fileData, ok := ctx.Value(fileDataKey).(*FileInsert)
+	return fileData, ok
 }
