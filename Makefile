@@ -52,6 +52,10 @@ crud:
 	@echo "Running code generation..."
 	$(GO) run codegen/generate_crud.go crud $(SCHEMA_PACKAGE) $(SCHEMA_NAME)
 
+templ:
+	@echo "Running templ generate"
+	@templ generate
+
 # Help command (to show available commands)
 help:
 	@echo "Available commands:"

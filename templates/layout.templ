@@ -1,6 +1,7 @@
 package templates 
 
 import "strconv"
+import "fmt"
 
 templ headerComponent(title string) {
 	<head>
@@ -36,18 +37,24 @@ templ IndexPage(global, user int) {
 }
 
 templ counts(global, user int) {
-	<div>Global: { strconv.Itoa(global) }</div>
+
+	<div id="globalState">{fmt.Sprintf("Global count %d\n", global)}</div>
 	<div>User: { strconv.Itoa(user) }</div>
 }
 
-templ form() {
-	<form action="/" method="POST">
-		<div><button type="submit" name="global" value="global">Global</button></div>
-		<div><button type="submit" name="user" value="user">User</button></div>
-	</form>
+templ actions() {
+		<div>
+		<button 
+			hx-post="/view/actions/global-increment"
+			hx-trigger="click"
+			hx-target="#globalState"
+			hx-swap="innerHTML">
+		  Global
+		  </button>
+		</div>
 }
 
 templ counter(global, user int) {
 	@counts(global, user)
-	@form()
+	@actions()
 }
