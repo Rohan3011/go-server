@@ -63,10 +63,10 @@ root/
 To create a new migration file:
 
 ```bash
-make migration NAME=new_migration_name
+make migration <migration_name>
 ```
 
-Replace `new_migration_name` with a descriptive name for your migration.
+Replace `<migration_name>` with a descriptive name for your migration.
 
 ### Applying Migrations
 

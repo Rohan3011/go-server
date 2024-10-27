@@ -62,7 +62,7 @@ help:
 	@echo "  make build       - Build the project"
 	@echo "  make run         - Build and run the project"
 	@echo "  make clean       - Clean up built binaries"
-	@echo "  make migration   - Create a new migration (Usage: make migration name=<migration_name>)"
+	@echo "  make migration   - Create a new migration"
 	@echo "  make migrate-up  - Apply migrations up"
 	@echo "  make migrate-down- Apply migrations down"
 	@echo "  make codegen
